@@ -2,7 +2,10 @@
 title: "Time Series Analysis - ARIMA Models"
 author: "Abdullahi Hussein"
 date: "03/09/2021"
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -61,3 +64,44 @@ We can plot the ACF and the PACF (Partial Auto-correlation function) of the diff
 # plots of ACF and PACF of differenced data
 P_acf = acf2(diff(log_gdp), max.lag = 54, main = "First difference of logged gdp")
 ```
+
+From the two plots above, it seems that PACF cuts of at lag 1 and ACF tails off at lag1. This 
+suggests ARIMA(1, 1, 0) model for the logged data. We can also argue that  ACF cuts of at lag 2 and
+PACF tails off at lag 2. This suggest ARIMA(0, 1, 2) for the logged data.
+
+## Fitting ARIMA models
+Our initial exploration suggested two different ARIMA models. we are going to fit both of them 
+and decide which one explains the data lag the best. 
+
+```{r, echo=FALSE, message=FALSE}
+# Fitting ARIMA(1,1, 0). Note, this is an Autogressive model with lag 1.
+AR1 = sarima(log_gdp, 1, 1, 0,)
+
+```
+
+We can see that **Standardized Residual** plot looks like the following white noise plot. This 
+means, there is no indication of non constant variance.
+```{r}
+white_noise = rnorm(150,0, 0.1)
+plot.ts(white_noise)
+```
+
+ACF residuals are within the blue lines. This suggest, there is no serial correlation of the 
+residuals at different lags. We can see almost all of ACF residuals fall within 
+$2/(\sqrt{n})$ where $n$ is th lenght of our dataset. This is given by 
+`r 2/sqrt(length(log_gdp))`
+
+From Normal Q-Q plot of the std Residuals, we see that most of the residuals are normally 
+distributed except may be few outliers at the two ends. 
+
+However, We can see that most of the p-value for **Ljung-Box statistic**  are within a significance 
+level of 5%. Therefore, we will not reject the hypothesis that the residuals have some serial 
+correlation (if most of the p-vluess are on or below the blue line, there is indication of 
+autocorrelation).
+
+```{r}
+#coefficents and their p-values
+AR1$ttable
+```
+
+We can see that the p-value fo the coefficiens and the constant term are both significant. 
