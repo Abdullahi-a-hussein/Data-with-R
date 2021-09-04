@@ -1,0 +1,63 @@
+---
+title: "Time Series Analysis - ARIMA Models"
+author: "Abdullahi Hussein"
+date: "03/09/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploring the data
+In this article, we are going to use the USA quarterly GDP available in **astsa** library in R. 
+We will start with loading the required libraries and the data.
+```{r}
+# if library not installed use 
+# install.packages("astsa")
+# loading the library
+library(astsa) 
+#loading the data
+data(gdp)
+#plotting the data. This is a time series data so we use the appropriate plots
+plot.ts(gdp, col = "darkblue")
+```
+
+The the above plot we see that Y-axis values are two large. This means,  our data is skewed. Since, the data is 
+skewed and all positive, we can use log transformation.
+
+```{r}
+# Takaing the log of the data
+log_gdp = log(gdp)
+# plotting the logged data
+plot.ts(log_gdp, xlab = "Yearl Quearters", ylab = "Logged Queartly GDP",
+        main = "Us logged Quarterly GDP from 1950 to 2020", col = "darkorange")
+```
+
+We can clearly see from the above plot, that the data has an upward trend. Therefore, the data is not stationary. To confirm this, 
+we will plot the Auto-correlation function of the data. 
+
+```{r}
+# plotting the ACF of logged gdp data
+acf(log_gdp, lag.max = 54, main = "ACF of Logged GDP")
+```
+
+The sample ACF, $\hat \rho(h)$ does to decay to zero fast enough as h, which is the time lag increases. 
+This suggest the use of differencing transformation to remove non-stationarity of the data.
+
+```{r}
+# Taking the first difference of the logged data and plotting it.
+plot(diff(log_gdp), xlab = "Yearly Quarters", ylab = "differenced logged gdp",
+     main = "First difference of logged DGP data", col = "darkblue")
+# Adding a line 
+abline(h = 0.01, col = "red")
+```
+
+From the plot of the differenced data, we can see the trend element of the data has been removed, and the data seems stationary.
+
+We can plot the ACF and the PACF (Partial Auto-correlation function) of the differenced data to decide what models need to be fitted.
+
+```{r}
+# plots of ACF and PACF of differenced data
+P_acf = acf2(diff(log_gdp), max.lag = 54, main = "First difference of logged gdp")
+```
