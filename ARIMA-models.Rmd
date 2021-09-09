@@ -73,7 +73,7 @@ PACF tails off at lag 2. This suggest ARIMA(0, 1, 2) for the logged data.
 Our initial exploration suggested two different ARIMA models. we are going to fit both of them 
 and decide which one explains the data lag the best. 
 
-```{r, echo=FALSE, message=FALSE}
+```{r,message=FALSE}
 # Fitting ARIMA(1,1, 0). Note, this is an Autogressive model with lag 1.
 AR1 = sarima(log_gdp, 1, 1, 0,)
 
@@ -104,4 +104,63 @@ autocorrelation).
 AR1$ttable
 ```
 
-We can see that the p-value fo the coefficiens and the constant term are both significant. 
+We can see that the p-value fo the coefficiens and the constant term are both 
+significant. 
+
+Next, We start fitting ARIMA(0, 1, 2) model to the logged data and go through 
+the same diagnosis as the model above.
+```{r}
+# Fitting ARIMA (0, 1, 2) model to the logged data
+MA2 = sarima(log_gdp, 0, 1, 2)
+```
+
+The standardized Residuals plot, the ACF of Residuals does not show show any 
+indication of serial correlation. The normal Q-Q Plot of Std Residuals suggest 
+most of the residuals are Normally  distributed except for few outliers at the 
+end of the two ends. The LJung-Box statistics plot p-values are all above the 
+reasonable significant level for most lags, unlike the ARIM(1, 1, 0) above. 
+```{r}
+MA2$ttable
+```
+We can see that the coefficients and the constant term of this model are all 
+significant
+
+Using Ljung-Box statistics, we decided to proceed with ARIMA(0, 1, 2) for the 
+prediction. For further Proof of the superiority of ARIMA(0, 1, 2), we can take 
+a look at the AIC, AICc, BIC of each model. 
+```{r}
+# AIC, AICc, BIC of ARIMA(1,1,0) and ARIMA(0, 1, 2)
+entries = data.frame("ARIMA(1,1,0)" = c(AR1$AIC, AR1$AICc, AR1$BIC),
+                     "ARIMA(0,1,2)" = c(MA2$AIC, MA2$AICc, MA2$BIC),
+                     row.names = c("AIC", "AICc","BIC"))
+knitr::kable(entries)
+```
+
+We can that the AIC, and AICc of ARIMA(0, 1, 2) are less than that of 
+ARIMA(1,1,0) although the difference is not that much. Therefore, we are going 
+to use ARIMA(0, 1, 2) for predictions.
+
+## Predictions
+We will try and forecast the next 10 quarters of the logged GDP data using 
+ARIMA(0, 1, 2) model 
+```{r}
+#predicting next 10 quarters of the logged GDP data
+pred = sarima.for(log_gdp, 10, 0, 1, 2)
+
+#95% confidence prediction interval and taking the anti-log
+#Upper 95% CI for the prediction and taking anti-log
+upper = exp(pred$pred + qnorm(0.975)*pred$se)
+#Lower 95 CI for the prediction and taking anti-log
+lower = exp(pred$pred - qnorm(0.975)*pred$se)
+#Putting the CI interval into a table
+pred_data = data.frame(Predicted = exp(pred$pred), Lower_95 = lower, 
+                       Upper_95 = upper)
+
+knitr::kable(pred_data)
+```
+
+We can see that our intervals are not that wide, which might mean our model 
+might have done good job of fitting the data well. But, we can see towards the 
+end as we move to values far away from the observed data, the prediction 
+interval gets wider. This is expected for any prediction. Our model is likely 
+to do better job of predicting values closer to the observed data. 
