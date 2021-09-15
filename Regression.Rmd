@@ -1,0 +1,129 @@
+---
+title: "Regression Analysis"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Introductiion
+This document contains steps to fitting linear regression. The data we are using in this file is _fat_ data from _Faraway_ package. We are going to split the data into two sets: A training set and test set. We select 
+every tenth observation as a test set and the rest as training set. The goal of this is to select the best model that predicts body fat percentage, _siri_ given the test data. 
+
+These are models that we are going to include and compare:
+
+- Linear variable that includes all of the predictors.
+- Linear regression that selects predictors using AIC
+- Principal Component regression
+- Partial Least Squares
+- Ridge Regression
+
+### Diving the data into two sets:
+```{r}
+#loading the library and the data
+library(faraway)
+data(fat)
+
+#divining the data
+#Removing brozek and density
+working_data = fat[ ,!(names(fat)%in%c("brozek","density"))]
+#Test set
+train_indices = seq(10, nrow(working_data), 10)
+test_set = working_data[train_indices,]
+# Training set
+train_data = working_data[-train_indices,]
+#taking a look at the first few data points
+  # Test set
+knitr::kable(head(test_set))
+  # Driving
+knitr::kable(head(train_data))
+
+```
+
+## Fitting Linear regression with all of the predictors and running the predicitons
+```{r}
+#fitting Linear regression and printing the output
+(l_regression = lm(siri ~., train_data))
+#predicted set
+predict_lr = predict(l_regression, test_set)
+```
+
+## Fitting Model with predictors selected by AIC
+```{r}
+#model selected using AIC
+(l_regAIC = step(l_regression, trace = 0))
+predict_AIC = predict(l_regAIC, test_set)
+```
+
+## Fitting Pricipal Component Regression
+```{r, message=FALSE}
+#loading the required library
+library(pls)
+```
+
+```{r}
+fit_pcr = pcr(siri~ ., data = train_data, validation = "CV", 
+              ncomp = (length(train_data) - 1))
+# choosing the number of component
+(comp = RMSEP(fit_pcr, estimate = "CV"))
+# Predicting 
+predict_pcr = predict(fit_pcr, ncomp = 5, test_set)
+```
+
+## Fitting Partial Least Squares Regression
+```{r}
+fit_plsr = plsr(siri ~ ., data = train_data, ncomp = (length(train_data) - 1),
+                validation = "CV")
+# choosing the number of component
+(comp = RMSEP(fit_plsr, estimate = "CV"))
+#predicting
+pred_Plsr = predict(fit_plsr, ncomp = 4, test_set)
+```
+
+## Fitting Ridge Regression
+```{r, message=FALSE}
+#loading the required library
+library(MASS)
+```
+
+```{r}
+fit_ridge = lm.ridge(siri ~., data = train_data, lambda = seq(0, 1, len = 1000))
+pred_ridge = cbind(1, as.matrix(test_set[, -1]))%*%coef(fit_ridge)[which.min(fit_ridge$GCV), ]
+```
+
+## Fitting Lasso Regression
+```{r}
+#loading the required library
+library(lars)
+fit_lars = lars(as.matrix(train_data[, -1]), train_data$siri)
+cvlmod = cv.lars(as.matrix(train_data[, -1]), train_data$siri)
+cvlmod$index[which.min(cvlmod$cv)]
+
+#predicting
+pred_lars = predict(fit_lars, s = 0.7979798, as.matrix(test_set[, -1]), mode = "fraction")
+```
+
+## Taking a look at the performance of  of the models 
+```{r}
+#RMSE function to compare models.
+rmse = function(x, y) sqrt(mean((x-y)^2))
+Comparison = data.frame(RMSE = c(rmse(predict_lr, test_set$siri),
+                   rmse(predict_AIC, test_set$siri),
+                   rmse(predict_pcr, test_set$siri),
+                   rmse(pred_Plsr, test_set$siri),
+                   rmse(pred_ridge, test_set$siri),
+                   rmse(pred_lars$fit, test_set$siri)))
+rows = c("Linear Regression",
+         "AIC Variable selection",
+         "PCA Variable selection",
+         "PLS Variable Selection",
+         "Ridge Regression",
+         "Lasso Regression")
+rownames(Comparison) = rows
+knitr::kable(Comparison)
+```
+
+The above table summarises the performance of each model. We can see that the model with the smallest RMSE 
+is *AIC Variable Selection* model. This means, it has the best generalized Performance. Whereas the 
+*PCA Variable Selection* has the largest RMSE which means it has the worst performance in predicting the 
+body fat percentage, _siri_.
