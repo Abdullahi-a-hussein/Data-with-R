@@ -224,7 +224,7 @@ knitr::kable(Comparison)
 | Lasso Regression       | 1.093538 |
 
 The above table summarises the performance of each model. We can see
-that the model with the smallest RMSE is *AIC Variable Selection* model.
-This means, it has the best generalized Performance. Whereas the *PCA
-Variable Selection* has the largest RMSE which means it has the worst
+that the model with the smallest RMSE is **AIC Variable Selection** model.
+This means, it has the best generalized Performance. Whereas the **PCA
+Variable Selection** has the largest RMSE which means it has the worst
 performance in predicting the body fat percentage, *siri*.
