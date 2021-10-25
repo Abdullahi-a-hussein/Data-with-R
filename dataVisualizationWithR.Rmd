@@ -1,0 +1,254 @@
+---
+title: "Data visualization with R"
+output:
+  pdf_document:
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: true
+    toc_debth: 5
+    theme: united
+    css: dataVisualization.css
+  github_document:
+     always_allow_html: true
+---
+\definecolor{light-grey}{gray}{0.9}
+\pagecolor{light-grey}
+```{r}
+# plot()
+# googleVis()
+# ggmap()
+# ggrepel()
+# waterfall()
+# rCharts()
+# ggvis
+# plotly
+
+library(ggplot2)
+#install.packages(ggmap)
+#install.packages()
+# install.packages("kableExtra")
+# Tables:
+# Call the print.data.frame generic method
+# knitr:: kable
+# tibble: :print.tbl df
+# markdown: :paged_table
+# pander::pander())
+# gt plot
+# Kable + kableExtra
+# formattable
+# DT
+# reactable
+# flextable
+# huxtable
+#  rhandsontable
+# pixiedust
+```
+
+# Introduction
+This document contains step by step guide on the common data visualization tools 
+used in _R_. 
+
+# Tables
+Tables are extremely important tool for anyone working with data. Tables helps us 
+display data in cells that are organized into rows and columns.
+
+We are going to look at different ways of presenting and organizing data data in talbes 
+Again, what is covered in this document is not exhaustive, but I will try to cover all types of tables that someone may need for any data related visualization.
+
+## Generic Tables in R
+One way to display the data in tables is to simply call the data in an R script. 
+This is similar to calling a print function on the data and prints the entire data 
+
+```{r message=FALSE, results='hide'}
+mtcars # similar to print(mtcars)
+
+```
+```{r echo=FALSE}
+head(mtcars, n = 7)
+```
+
+
+Notice, this way prints the whole data on the documnt. This is not very informative and is 
+never recommended unless your data is very small. Most of the time you are dealing with 
+very large data sets that have more than a thousand observations. Printing such data set does not make any sense. 
+
+Sometimes, you may want see a glimpse of the data, may be see the first or the last few observations of the data. we can use the function ` head()`  to see the first few observations or `tail()` to see the last few observations. 
+```{r}
+head(mtcars) # first 6 observations, use head(mtcars, n = 10) to see first 10, etc
+tail(mtcars) # last 6 observation, use tail(mtcars, n = 10) to see lastt 10, etc
+```
+
+if you want to get any range, any any specific columns of the data set, use the indices of those observations and columns. Suppose, you want see observations 10 to 15, or you want to see the 2nd column of the data. The following is how you would do that.
+```{r}
+mtcars[10:15,] #observations 10 to 15
+mtcars[, 2] # extracting second column. 
+mtcars[10:15,1:4] #observatons 10 to 15 with columns 1 to 4 entries only
+```
+
+This is all good but, we our tables don't look good. We can make this look little better by using 
+`knitr::kable()`. 
+
+## Kable
+```{r}
+knitr::kable(head(mtcars))
+```
+
+Note that kable only accepts data in a data frame or matrix format. You can make few tweaks to your tables in a kable. Use `format` parameter to set your format to either 
+`latex, pipe, html, simple` or `rst`. Use `digits` to round off your numerical values to the desired  number of decimals. Use `row.names` and `col.names` to manage row names and/or column names of your tables. Run `?knitr::kable` in R junk to learn more about kable tables. 
+```{r}
+jupitor_moons = c("Metis", "Adrastea", "Amalthea", "Theba", "Io", "Europa")
+moon_diameter = c(43, 16.4, 167, 98.6, 3643.2, 3121.6)
+moon_mass = c(3.6, 0.2, 208, 43, 8931900, 480000)
+
+#combining into data frame
+jupiter = data.frame(moon_diameter, moon_mass, row.names = jupitor_moons)
+
+#using kable to display data.frame
+knitr::kable(jupiter, row.names = TRUE, 
+             col.names = c("Moon Diameter (Km)", "Moon mass (e+16 Kg)"), digits = 1, 
+             caption = "First Six jupiter moons")
+```
+
+### Kable Extra
+We can also add vertical lines to a kable table. We can use `kableExtra` package to achieve this.
+```{r, message=FALSE, results='hide'}
+library(knitr)
+library(kableExtra)
+library(dplyr)
+```
+
+To use pipes and to make our work easier, we are going to use `dplyr` package. 
+```{r}
+mthead = head(mtcars)
+mthead%>%
+  kbl()%>%
+   kable_styling()
+```
+
+
+Aligning the column contents. you can use a vector, or a string to align each 
+column.
+
+#### Column border
+We can add column borders to a specific column(s). To do this, we use 
+`column_spec()` as shown in the following R chunk, The first parameter is the columns we want to have borders, 
+in this case columns 2 to 11. Just make sure you include the end border.  
+```{r}
+mthead %>% 
+   kbl(align = "lcrlcrlcrlc", digits = 1) %>% # aligning the column in content.
+   column_spec(2:12, border_left = T, border_right = T) %>% # adding vertical lines
+   kable_styling(full_width = F)
+```
+
+#### Font size
+Changing the font size.
+```{r}
+mthead %>% 
+   kbl() %>% 
+   kable_styling(font_size = 9)
+```
+##### Color
+changing the color of a column. We are going to change the background, and font color of column 1.
+```{r}
+mthead %>% 
+   kbl() %>% 
+   column_spec(2, color = "red", background = "blue") %>% 
+   kable_styling()
+```
+
+we can change the font type, size,color and background color as well.
+```{r}
+mthead %>% 
+   kbl() %>% 
+   row_spec(1:3, color = "green", background = "blue") %>% 
+   kable_styling()
+```
+
+#### combining everything
+More mutation of colors and details. We are changing the colors of `disp` column. We are also adding `tooltip` 
+to display which kind of car you are looking it at. Just hover over the values, and you will see. 
+```{r}
+mthead %>% 
+   mutate(
+      disp = cell_spec(disp, color = spec_color(disp, option = "C", alpha = 1, begin = 0, end = 0.8), #link = "#", 
+                       tooltip = paste0(row.names(.))) 
+      ) %>% 
+   mutate_if(is.numeric, function(x){
+    cell_spec(x, color = spec_color(x), background = spec_color(x, option = "B", alpha = 0.5, begin = 0.4, end = 0.8), bold = T)}) %>% 
+   kable(escape = F, align = "c") %>% 
+   kable_styling(full_width = F)
+```
+In the  `mutate_if()`, we are changing the color and background color of every cell. excepts for the cells 
+in `disp` column, which we format before the mutate. The background color is not that useful here. We can 
+therefore, remove it. We can also add a hover over gray box. 
+```{r}
+mthead %>% 
+   mutate(
+      disp = cell_spec(disp, color = spec_color(disp, option = "C", alpha = 1, begin = 0, end = 0.8), #link = "#", 
+                       tooltip = paste0(row.names(.))) 
+      ) %>% 
+   mutate_if(is.numeric, function(x){
+    cell_spec(x, color = spec_color(x), bold = T)}) %>% 
+   kable(escape = F, align = "c") %>% 
+   kable_styling(full_width = F, "hover")
+```
+
+We can add a divider value color to a specific columns. Let's make 18 the cut off value for 
+`qsec` column. 
+```{r}
+mthead %>% 
+   mutate(
+      qsec = ifelse(qsec > 18, 
+                    cell_spec(qsec, color = "blue", bold = T),
+                    cell_spec(qsec, color = "green")) 
+      ) %>% 
+   kable(escape = F, align = "c") %>% 
+   kable_styling(full_width = F)
+```
+
+We can see values greater than 18 are light blue in color and values less than 
+18 are green in color. 
+
+#### Themes
+
+1. `kable_styling()`.
+The default theme when used HTML table is twitter bootstrap on this table theme.
+This is what we have used for the previous tables.
+
+2. `kable_classic()`.
+```{r}
+mthead %>% 
+   kbl() %>% 
+   kable_classic()
+```
+
+3. `kable_classic_2()`.
+```{r}
+mthead %>% 
+   kbl() %>% 
+   kable_classic_2(full_width = F)
+```
+
+4. `kable_material()`.
+```{r}
+mthead %>% 
+   kbl() %>% 
+   kable_material()
+```
+
+5. `kable_paper()`.
+```{r}
+mthead %>% 
+   kbl %>% 
+   kable_paper()
+```
+
+6. 'kable_minimal()`
+```{r}
+mthead %>% 
+   kbl() %>% 
+   kable_minimal()
+```
+
+Please take a look at the `kableExtra` webpage to see other themes. 

@@ -1,0 +1,75 @@
+/* Styling heading one */
+h1 {
+    color: rgb(55, 25, 65);
+    font-size: 28px;
+    position: relative;
+    font-weight:bold;
+    font-family: 'Times New Roman', Times, serif;
+    text-align: center;
+}
+
+/* Styling h1  */
+h2 {
+    color: rgb(55, 25, 65);
+    font-size: 20px;
+    position: relative;
+    font-weight:bold;
+    font-family: 'Times New Roman', Times, serif;
+    text-align: center;
+}
+
+/* Styling h1  */
+h3 {
+    color: rgb(55, 25, 65);
+    font-size: 16px;
+    position: relative;
+    font-weight:bold;
+    font-family: 'Times New Roman', Times, serif;
+    text-align: center;
+}
+/* styling paragraphs */
+p {
+    font-size: 15px;
+    font-family:'Times New Roman', Times, serif;
+    font-weight: normal;
+}
+
+/* Adding background image*/
+body {
+    background-image:"white_carbon_@2X.png";
+    background-color: #d7e9e7;
+    box-shadow: navy;
+}
+
+/* styling  R Junk */
+.r{
+    color:white;
+    background-color: black;
+} 
+
+
+/*styling links */
+.tocify {
+
+    color:rgb(34, 78, 161);
+    background-color: #000000;
+    
+}
+
+.list-group-item:active
+.list-group-item:active, .list-group-item.active, 
+.list-group-item:active:hover, 
+.list-group-item:active:focus {
+    color: #ffffff;
+    background-color: #14c0df;
+    border-color: rgb(155, 202, 155);
+    z-index: 3;
+}
+
+
+
+    
+
+
+
+   
